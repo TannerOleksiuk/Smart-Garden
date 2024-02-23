@@ -3,5 +3,6 @@ idf_component_register(SRCS
     "./src/camera.c" 
     "./src/wifi.c"
     "./src/http.c"
+    "./src/gpio.c"
                     INCLUDE_DIRS "." "./src")
 target_compile_definitions(${COMPONENT_LIB} PUBLIC "-DLOG_LOCAL_LEVEL=ESP_LOG_VERBOSE")

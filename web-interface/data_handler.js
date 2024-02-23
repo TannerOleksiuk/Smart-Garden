@@ -1,7 +1,13 @@
-function capture_image()
+function toggle_pump()
 {
-    const image = document.getElementById("image-stream");
-    const url = "http://smart-garden/image";
-    image.innerHTML = location.reload()
-    
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open( "GET", "http://smart-garden/pump", true ); // false for synchronous request
+    xmlHttp.send( null );
+}
+
+function toggle_lights()
+{
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open( "GET", "http://smart-garden/lights", true ); // false for synchronous request
+    xmlHttp.send( null );
 }

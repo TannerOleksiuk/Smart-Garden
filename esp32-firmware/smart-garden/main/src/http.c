@@ -4,6 +4,7 @@
 #include <esp_event.h>
 #include <esp_log.h>
 #include "camera.h"
+#include "gpio.h"
 /* Our URI handler function to be called during GET /uri request */
 /*esp_err_t get_handler(httpd_req_t *req)
 {
@@ -26,6 +27,20 @@ struct async_resp_arg {
     httpd_handle_t hd;
     int fd;
 };
+
+static esp_err_t toggle_pump_handler(httpd_req_t *req)
+{
+    toggle_pump();
+    req = httpd_resp_send(req, "ACK", 4);
+    return ESP_OK;
+}
+
+static esp_err_t toggle_lights_handler(httpd_req_t *req)
+{
+    toggle_lights();
+    req = httpd_resp_send(req, "ACK", 4);
+    return ESP_OK;
+}
 
 /*
  * async send function, which we put into the httpd work queue
@@ -146,6 +161,22 @@ httpd_uri_t uri_stream = {
     .user_ctx = NULL
 };
 
+/* URI handler structure for relay toggle /uri */
+httpd_uri_t pump_toggle = {
+    .uri      = "/pump",
+    .method   = HTTP_GET,
+    .handler  = toggle_pump_handler,
+    .user_ctx = NULL
+};
+
+/* URI handler structure for relay toggle /uri */
+httpd_uri_t lights_toggle = {
+    .uri      = "/lights",
+    .method   = HTTP_GET,
+    .handler  = toggle_lights_handler,
+    .user_ctx = NULL
+};
+
 
 /* Function for starting the webserver */
 httpd_handle_t start_webserver(void)
@@ -161,6 +192,8 @@ httpd_handle_t start_webserver(void)
         /* Register URI handlers */
         httpd_register_uri_handler(server, &uri_get);
         httpd_register_uri_handler(server, &uri_stream);
+        httpd_register_uri_handler(server, &pump_toggle);
+        httpd_register_uri_handler(server, &lights_toggle);
         // WebSocket Server
         httpd_register_uri_handler(server, &ws);
     }
