@@ -9,6 +9,7 @@
 #include "wifi.h"
 #include "http.h"
 #include "gpio.h"
+#include "water_sensor.h"
 
 static const char* TAG = "MAIN";
 static void task_main();
@@ -31,7 +32,7 @@ void app_main(void)
   ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
   wifi_init_sta();
   // Main Task
-  //xTaskCreate(task_main, "main", 2048, NULL, 4, NULL);
+  xTaskCreate(task_main, "main", 2048, NULL, 4, NULL);
   //Server
   httpd_handle_t http_handle;
   http_handle = start_webserver();
@@ -41,12 +42,14 @@ void app_main(void)
 
 static void task_main()
 {
-  // //Actuate Relays
-  // actuate_pump();
-  // actuate_lights();
-  // vTaskDelay(pdMS_TO_TICKS(5000));
-  // //Release
-  // release_lights();
-  // release_pump();
-  // vTaskDelete(NULL);
+  while(true)
+  {
+    uint16_t tank = 0;
+    uint16_t soil = 0;
+    tank = get_sample(WATER_TANK_SENSOR, 64);
+    soil = get_sample(SOIL_SENSOR, 64);
+    ESP_LOGI(TAG, "TANK LEVEL SENSOR: %u", tank);
+    ESP_LOGI(TAG, "SOIL LEVEL SENSOR: %u", soil);
+    vTaskDelay(pdMS_TO_TICKS(500));
+  }
 }
