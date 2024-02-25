@@ -1,12 +1,15 @@
 #include "esp_adc_cal.h"
 #include "driver/adc.h"
 #include "water_sensor.h"
+#include "esp_log.h"
+
+static const char *TAG = "ADC";
 
 void init_water_sensors()
 {
     adc1_config_width(ADC_WIDTH_12Bit);
-    adc1_config_channel_atten(SOIL_SENSOR, ADC_ATTEN_0db);
-    adc1_config_channel_atten(WATER_TANK_SENSOR, ADC_ATTEN_0db);
+    adc1_config_channel_atten(SOIL_SENSOR, ADC_ATTEN_DB_11);
+    adc1_config_channel_atten(WATER_TANK_SENSOR, ADC_ATTEN_DB_11);
 }
 
 // Multi sample and average to return a sample
