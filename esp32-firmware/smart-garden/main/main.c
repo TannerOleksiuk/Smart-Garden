@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "water_sensor.h"
 #include "temperature.h"
+#include "sensor_data.h"
 
 static const char* TAG = "MAIN";
 static void monitor_sensors();
@@ -47,6 +48,7 @@ void app_main(void)
 
 static void monitor_sensors()
 {
+  SemaphoreHandle_t handle = create_data_mutex();
   while(true)
   {
     uint16_t tank = 0;
@@ -55,6 +57,9 @@ static void monitor_sensors()
     tank = get_sample(WATER_TANK_SENSOR, 64);
     soil = get_sample(SOIL_SENSOR, 64);
     temp_c = read_temperature(spi_device);
+    set_soil_level(soil, handle);
+    set_tank_level(tank, handle);
+    set_temperature(temp_c, handle);
     ESP_LOGI(TAG, "TANK LEVEL SENSOR: %u", tank);
     ESP_LOGI(TAG, "SOIL LEVEL SENSOR: %u", soil);
     ESP_LOGI(TAG, "TEMPERATURE: %f C", temp_c);
