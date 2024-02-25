@@ -4,6 +4,7 @@
 #include <esp_event.h>
 #include <esp_log.h>
 #include "camera.h"
+#include "sensor_data.h"
 #include "gpio.h"
 /* Our URI handler function to be called during GET /uri request */
 /*esp_err_t get_handler(httpd_req_t *req)
@@ -18,6 +19,8 @@
 
 static const char *TAG = "WEBSERVER";
 
+static SemaphoreHandle_t handle;
+
 /*
  * Structure holding server handle
  * and internal socket fd in order
@@ -31,15 +34,43 @@ struct async_resp_arg {
 static esp_err_t toggle_pump_handler(httpd_req_t *req)
 {
     toggle_pump();
-    req = httpd_resp_send(req, "ACK", 4);
-    return ESP_OK;
+    return httpd_resp_send(req, "ACK", 4);
 }
 
 static esp_err_t toggle_lights_handler(httpd_req_t *req)
 {
     toggle_lights();
-    req = httpd_resp_send(req, "ACK", 4);
-    return ESP_OK;
+    return httpd_resp_send(req, "ACK", 4);
+}
+
+static esp_err_t tank_handler(httpd_req_t *req)
+{
+    uint16_t tank = get_tank_level(handle);
+    char resp[6];
+    memset(resp, 0, sizeof(resp));
+    sprintf(resp, "%u", tank);
+    return httpd_resp_send(req, resp, sizeof(resp));
+}
+
+static esp_err_t soil_handler(httpd_req_t *req)
+{
+    uint16_t soil = get_soil_level(handle);
+    char resp[6];
+    memset(resp, 0, sizeof(resp));
+    sprintf(resp, "%u", soil);
+    return httpd_resp_send(req, resp, sizeof(resp));
+}
+
+static esp_err_t temperature_handler(httpd_req_t *req)
+{
+    float temp = get_temperature(handle);
+    char resp[8];
+    memset(resp, 0, sizeof(resp));
+    if(temp < 1025)
+    {
+        sprintf(resp, "%7.2f", temp);
+    }
+    return httpd_resp_send(req, resp, sizeof(resp));
 }
 
 /*
@@ -177,13 +208,37 @@ httpd_uri_t lights_toggle = {
     .user_ctx = NULL
 };
 
+/* URI handler structure for relay toggle /uri */
+httpd_uri_t get_tank = {
+    .uri      = "/tank",
+    .method   = HTTP_GET,
+    .handler  = tank_handler,
+    .user_ctx = NULL
+};
+
+/* URI handler structure for relay toggle /uri */
+httpd_uri_t get_soil = {
+    .uri      = "/soil",
+    .method   = HTTP_GET,
+    .handler  = soil_handler,
+    .user_ctx = NULL
+};
+
+/* URI handler structure for relay toggle /uri */
+httpd_uri_t get_temp = {
+    .uri      = "/temperature",
+    .method   = HTTP_GET,
+    .handler  = temperature_handler,
+    .user_ctx = NULL
+};
+
 
 /* Function for starting the webserver */
 httpd_handle_t start_webserver(void)
 {
     /* Generate default configuration */
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-
+    handle = create_data_mutex();
     /* Empty handle to esp_http_server */
     httpd_handle_t server = NULL;
 
@@ -194,6 +249,9 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &uri_stream);
         httpd_register_uri_handler(server, &pump_toggle);
         httpd_register_uri_handler(server, &lights_toggle);
+        httpd_register_uri_handler(server, &get_temp);
+        httpd_register_uri_handler(server, &get_soil);
+        httpd_register_uri_handler(server, &get_tank);
         // WebSocket Server
         httpd_register_uri_handler(server, &ws);
     }
