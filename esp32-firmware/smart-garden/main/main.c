@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "esp_err.h"
 #include "esp_log.h"
 #include "camera.h"
 #include "freertos/FreeRTOS.h"
@@ -34,7 +35,8 @@ void app_main(void)
   //Server
   httpd_handle_t http_handle;
   http_handle = start_webserver();
-  vTaskDelete(NULL);
+  ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &http_handle));
+  ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &http_handle));
 }
 
 static void task_main()

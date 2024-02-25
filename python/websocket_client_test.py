@@ -24,10 +24,14 @@ def stream():
         websocket.send("stream")
         while True:
             msg = websocket.recv()
-            img = np.asarray(Image.open(BytesIO(msg)))
-            cv2.imshow("Image", img)
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord('q'):
-                websocket.close()
+            try:
+                img = np.asarray(Image.open(BytesIO(msg)))
+                cv2.imshow("Image", img)
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord('q'):
+                    websocket.close()
+            except:
+                print("Failed to process frame")
+                continue
 
 stream()
